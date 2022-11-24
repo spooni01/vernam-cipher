@@ -1,12 +1,14 @@
-; Autor reseni: Jmeno Prijmeni login
+; Autor reseni: Adam Ližičiar xlizic00
 
 ; Projekt 2 - INP 2022
 ; Vernamova sifra na architekture MIPS64
 
 ; DATA SEGMENT
                 .data
-login:          .asciiz "Hello world!"  ; sem doplnte vas login
+login:          .asciiz "xlizic00"  ; sem doplnte vas login
 cipher:         .space  17  ; misto pro zapis sifrovaneho loginu
+cipherkey1:     .word 12 ; pismeno L, pozicia od zaciatku
+cipherkey2:     .word 9  ; pismeno I, pozicia od zaciatku
 
 params_sys5:    .space  8   ; misto pro ulozeni adresy pocatku
                             ; retezce pro vypis pomoci syscall 5
