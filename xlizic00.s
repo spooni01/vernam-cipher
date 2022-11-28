@@ -10,6 +10,7 @@ cipher:         .space  17          ; misto pro zapis sifrovaneho loginu
 cipherkey1:     .word   12          ; pismeno L, pozicia od zaciatku
 cipherkey2:     .word   9           ; pismeno I, pozicia od zaciatku
 poscnt:         .word   0           ; counting position of adress from start
+asciichar:      .word   97          ; number of 'a' in Ascii table
 
 params_sys5:    .space  8   ; misto pro ulozeni adresy pocatku
                             ; retezce pro vypis pomoci syscall 5
@@ -17,35 +18,44 @@ params_sys5:    .space  8   ; misto pro ulozeni adresy pocatku
 
 ; CODE SEGMENT
 ; registers: 
-; r19 - cipher
-; r12 - cipher key
-; r29 - position counter
+; r19 - changing variable 
+; r12 - changing variable
+; r29 - changing variable (poscnt)
 ; r26 - login
-; r0
+; r0 - null
 ; r4 - string for terminal
 .text
 main:
     ; Save variables to data
     lb r29, poscnt(r0) 
-    lb r12, cipherkey2(r0) 
 
-     
-    ; Get address of original string
-    ; for cycle:
-    lb r26, login(r29) 
-    ; todo: check, if number in not of ascii
-    ; compare r26, if is not greater than some number: if it is, then sub from r26 some number
-    add r26, r26, r12
-    sb r26, login(r29)
-    addi r29, r29, 1
-    ; todo: compare if char is not equal to number, if not, do for cycle again 
+    ; For cycle will go through the string until it hits a number
+    for_cycle:
+        ; Get address of original string
+        lb r26, login(r29) 
 
+        ; Compare if char is not equal to number
+        lb r19, asciichar(r0) 
+        sub r26, r26, r19
+        bgez r26, continue  ; If int of char is more than 0, continie, else end cycle because the input char is not alfanumeric
+        j end_for_cycle
 
-    ; Add or sub cipher key
-    ; Save it to cipher and add 1 to address
-    ; Do it while character is not '\0'
+        continue:
+        add r26, r26, r19 ; Add value of asciichar back, because in previous comparsition it was changed
+        ; Add cipher key to char and move position counter to next cell
+        lb r12, cipherkey1(r0) 
+        add r26, r26, r12
+        sb r26, cipher(r29)
+        addi r29, r29, 1
 
-    daddi   r4, r0, login  ; vozrovy vypis: adresa login: do r4
+        ; todo: odpocitaj od vysledku asciichar_start a asciichar_end, ak je pod/nad, pripocitaj
+        ; to k tomu, aby vysledok bol v tabulke
+
+        b for_cycle ; Jump to start of for cycle     
+    end_for_cycle:
+
+    ; Print result
+    daddi   r4, r0, cipher  ; vozrovy vypis: adresa login: do r4
     jal     print_string    ; vypis pomoci print_string - viz nize
     
     syscall 0   ; halt
