@@ -7,8 +7,8 @@
                 .data
 login:          .asciiz "xlizic00"  ; sem doplnte vas login
 cipher:         .space  17          ; misto pro zapis sifrovaneho loginu
-cipherkey1:     .word   12          ; pismeno L, pozicia od zaciatku
-cipherkey2:     .word   9           ; pismeno I, pozicia od zaciatku
+cipherkey1:     .word   12          ; letter L, value from begin of ASCII 'a', for even (2,4,...)
+cipherkey2:     .word   9           ; letter I, value from begin of ASCII 'a', for odd (1,3,...)
 poscnt:         .word   0           ; counting position of adress from start
 asciiCharStart: .word   97          ; number of 'a' in Ascii table
 asciiCharEnd:   .word   122         ; number of 'z' in Ascii table
@@ -17,32 +17,23 @@ zero:           .word   0           ; Value '0'
 params_sys5:    .space  8   ; misto pro ulozeni adresy pocatku
                             ; retezce pro vypis pomoci syscall 5
                             ; (viz nize "funkce" print_string)
+; registers: r19 r12 r29 r26 r0 r4 
 
 ; CODE SEGMENT
-; registers: 
-; r19 - changing variable 
-; r12 - changing variable
-; r29 - changing variable (poscnt)
-; r26 - login
-; r0 - null
-; r4 - string for terminal
 .text
 main:
-    ; Save variables to data
     lb r29, poscnt(r0) 
 
     ; For cycle will go through the string until it hits a number
     for_cycle:
-        ; Get address of original string
-        lb r26, login(r29) 
+        lb r26, login(r29) ; Get address of original string
 
         ; Compare if char is not equal to number
         lb r19, asciiCharStart(r0) 
         sub r26, r26, r19
-        bgez r26, continue  ; If int of char is more than 0, continie, else end cycle because the input char is not alfanumeric
+        bgez r26, continue  ; If int of char is more than 0, continue, else end cycle because the input char is not alfanumeric
         j end_for_cycle
 
-        ; todo: neparne pripocitaj, parne odpocitaj
         continue:
         add r26, r26, r19 ; Add value of asciiCharStart back, because in previous comparsition it was changed
         
@@ -57,12 +48,14 @@ main:
             addi r19, r19, 1
             sb r19, oddOrEven(r0)
 
-            lb r12, cipherkey1(r0) 
-            add r26, r26, r12
+            ;  Load cipher key
+            lb r12, cipherkey1(r0)
+
             ; Check if r26 is not bigger than Ascii
+            add r26, r26, r12      
             lb r4, asciiCharEnd(r0)
             sub r4, r26, r4
-            bgez r4, jumpToStartOfAscii
+            bgez r4, jumpToStartOfAscii 
             b storeRegister
             jumpToStartOfAscii:
             lb r4, asciiCharEnd(r0)
@@ -77,9 +70,11 @@ main:
             addi r19, r19, -1
             sb r19, oddOrEven(r0)
 
+            ;  Load cipher key
             lb r12, cipherkey2(r0) 
-            sub r26, r26, r12
+
             ; Check if r26 is not smaller than Ascii
+            sub r26, r26, r12
             lb r4, asciiCharStart(r0)
             sub r4, r26, r4
             bgez r4, storeRegister
@@ -94,11 +89,8 @@ main:
         sb r26, cipher(r29)
         addi r29, r29, 1
 
-        ; todo: odpocitaj od vysledku asciiCharStart a asciichar_end, ak je pod/nad, pripocitaj
-        ; to k tomu, aby vysledok bol v tabulke
-
-
-        b for_cycle ; Jump to start of for cycle     
+        ; Jump to start of for cycle
+        b for_cycle  
     end_for_cycle:
 
     ; Print result
