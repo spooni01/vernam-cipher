@@ -2,11 +2,11 @@ import os
 from subprocess import *
 import re
 
-if not os.path.isfile("edumips64-1.2.10.jar"):
+if not os.path.isfile("simulator/edumips64-1.2.10.jar"):
     print("ERROR!!! edumips64-1.2.10.jar not found")
     exit(1)
 
-login=input("Enter login: ")
+login="xlizic00"
 
 def encypherLogin(login, encryptionKey):
     s=""

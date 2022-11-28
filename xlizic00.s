@@ -10,8 +10,10 @@ cipher:         .space  17          ; misto pro zapis sifrovaneho loginu
 cipherkey1:     .word   12          ; pismeno L, pozicia od zaciatku
 cipherkey2:     .word   9           ; pismeno I, pozicia od zaciatku
 poscnt:         .word   0           ; counting position of adress from start
-asciichar:      .word   97          ; number of 'a' in Ascii table
-
+asciiCharStart: .word   97          ; number of 'a' in Ascii table
+asciiCharEnd:   .word   122         ; number of 'z' in Ascii table
+oddOrEven:      .word   0           ; '0' for even position, '1' for odd position
+zero:           .word   0           ; Value '0'
 params_sys5:    .space  8   ; misto pro ulozeni adresy pocatku
                             ; retezce pro vypis pomoci syscall 5
                             ; (viz nize "funkce" print_string)
@@ -35,28 +37,73 @@ main:
         lb r26, login(r29) 
 
         ; Compare if char is not equal to number
-        lb r19, asciichar(r0) 
+        lb r19, asciiCharStart(r0) 
         sub r26, r26, r19
         bgez r26, continue  ; If int of char is more than 0, continie, else end cycle because the input char is not alfanumeric
         j end_for_cycle
 
+        ; todo: neparne pripocitaj, parne odpocitaj
         continue:
-        add r26, r26, r19 ; Add value of asciichar back, because in previous comparsition it was changed
+        add r26, r26, r19 ; Add value of asciiCharStart back, because in previous comparsition it was changed
+        
+        ; Check if is odd or even position
+        lb r19, oddOrEven(r0)
+        lb r4, zero(r0)
+        bne r19, r4, isOdd
+
         ; Add cipher key to char and move position counter to next cell
-        lb r12, cipherkey1(r0) 
-        add r26, r26, r12
+        isEven:
+            ; Change even to odd
+            addi r19, r19, 1
+            sb r19, oddOrEven(r0)
+
+            lb r12, cipherkey1(r0) 
+            add r26, r26, r12
+            ; Check if r26 is not bigger than Ascii
+            lb r4, asciiCharEnd(r0)
+            sub r4, r26, r4
+            bgez r4, jumpToStartOfAscii
+            b storeRegister
+            jumpToStartOfAscii:
+            lb r4, asciiCharEnd(r0)
+            sub r26, r26, r4
+            lb r4, asciiCharStart(r0)
+            add r26, r26, r4
+            addi r26, r26, -1
+            b storeRegister
+
+        isOdd:
+            ; Change odd to even
+            addi r19, r19, -1
+            sb r19, oddOrEven(r0)
+
+            lb r12, cipherkey2(r0) 
+            sub r26, r26, r12
+            ; Check if r26 is not smaller than Ascii
+            lb r4, asciiCharStart(r0)
+            sub r4, r26, r4
+            bgez r4, storeRegister
+            lb r4, asciiCharEnd(r0)
+            add r26, r26, r4
+            lb r4, asciiCharStart(r0)
+            sub r26, r26, r4
+            addi r26, r26, 1
+            b storeRegister
+
+        storeRegister:
         sb r26, cipher(r29)
         addi r29, r29, 1
 
-        ; todo: odpocitaj od vysledku asciichar_start a asciichar_end, ak je pod/nad, pripocitaj
+        ; todo: odpocitaj od vysledku asciiCharStart a asciichar_end, ak je pod/nad, pripocitaj
         ; to k tomu, aby vysledok bol v tabulke
+
 
         b for_cycle ; Jump to start of for cycle     
     end_for_cycle:
 
     ; Print result
-    daddi   r4, r0, cipher  ; vozrovy vypis: adresa login: do r4
-    jal     print_string    ; vypis pomoci print_string - viz nize
+    daddi   r4, r0, cipher 
+    jal     print_string  
     
     syscall 0   ; halt
 
