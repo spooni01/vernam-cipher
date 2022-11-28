@@ -1,2 +1,2 @@
-tests/ linguist-documentation
-simulator/ linguist-documentation
+*.py -linguist-detactable
+*.c -linguist-detactable
