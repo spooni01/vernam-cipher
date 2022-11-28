@@ -1,2 +1,2 @@
-*.py -linguist-detactable
-*.c -linguist-detactable
+*.py linguist-detactable=false
+*.c linguist-detactable=false
