@@ -1,2 +1,2 @@
-tests/*.py linguist-detactable=false
+tests/test_pro.py linguist-detactable=false
 *.c linguist-detactable=false
