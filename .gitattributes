@@ -1,2 +1,5 @@
-tests/test_pro.py linguist-detactable=false
+tests/** linguist-vendored
+simulator/** linguist-vendored
+
+*.py linguist-detactable=false
 *.c linguist-detactable=false
